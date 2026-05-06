@@ -3,14 +3,15 @@ import pandas as pd
 import time
 
 # ── Configuration ──────────────────────────────────────────
-API_KEY    = "mx0vgllQs1umrvFfYK"
-API_SECRET = "207e7bd0f75040bdb8f7c11abc9cf7ab"
+API_KEY    = "COLLE_TA_CLE_ICI"
+API_SECRET = "COLLE_TON_SECRET_ICI"
 
 SYMBOL     = "BTC/USDT"
 TIMEFRAME  = "1h"
 MA_COURT   = 9
 MA_LONG    = 21
 MONTANT    = 10  # euros investis par trade
+STOP_LOSS  = 0.03  # 3% de perte maximum
 
 # ── Connexion MEXC ─────────────────────────────────────────
 exchange = ccxt.mexc({
@@ -36,6 +37,7 @@ def get_signal():
 def run():
     print("Bot démarré. En attente de signaux...")
     position = False
+    prix_achat = None
 
     while True:
         try:
@@ -43,9 +45,20 @@ def run():
             prix   = exchange.fetch_ticker(SYMBOL)["last"]
             print(f"Signal : {signal} | Prix BTC : {prix} USDT")
 
+            # Stop-loss
+            if position and prix_achat:
+                perte = (prix - prix_achat) / prix_achat
+                if perte <= -STOP_LOSS:
+                    solde = exchange.fetch_balance()["BTC"]["free"]
+                    exchange.create_market_sell_order(SYMBOL, solde)
+                    print(f"🛑 STOP-LOSS déclenché : vente à {prix} USDT (perte: {perte*100:.1f}%)")
+                    position = False
+                    prix_achat = None
+
             if signal == "ACHETER" and not position:
                 quantite = MONTANT / prix
                 exchange.create_market_buy_order(SYMBOL, quantite)
+                prix_achat = prix
                 print(f"✅ ACHAT exécuté : {quantite:.6f} BTC à {prix} USDT")
                 position = True
 
@@ -54,10 +67,11 @@ def run():
                 exchange.create_market_sell_order(SYMBOL, solde)
                 print(f"✅ VENTE exécutée : {solde:.6f} BTC à {prix} USDT")
                 position = False
+                prix_achat = None
 
         except Exception as e:
             print(f"⚠️ Erreur : {e}")
 
-        time.sleep(3600)  # vérifie toutes les heures
+        time.sleep(3600)
 
 run()
