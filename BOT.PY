@@ -3,8 +3,8 @@ import pandas as pd
 import time
 
 # ── Configuration ──────────────────────────────────────────
-API_KEY    = "COLLE_TA_CLE_ICI"
-API_SECRET = "COLLE_TON_SECRET_ICI"
+API_KEY    = "mx0vgllQs1umrvFfYK"
+API_SECRET = "207e7bd0f75040bdb8f7c11abc9cf7ab"
 
 SYMBOL     = "BTC/USDT"
 TIMEFRAME  = "1h"
